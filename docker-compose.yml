@@ -1,0 +1,11 @@
+---
+version: "3.1"
+services:
+  surveydb:
+    image: docker.io/postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: budjet
+      POSTGRES_PASSWORD: budjet
+      POSTGRES_DB: budjet

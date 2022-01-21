@@ -1,0 +1,170 @@
+databaseChangeLog:
+- changeSet:
+    id: 1641917126586-1
+    author: dphillips
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: bills_pkey
+            name: id
+            type: UUID
+        - column:
+            name: amount
+            type: numeric(19, 2)
+            constraints:
+                nullable: false
+        - column:
+            name: currency
+            type: INTEGER
+            constraints:
+                nullable: false
+            defaultValue: 1
+        - column:
+            name: enddate
+            type: date
+        - column:
+            name: name
+            type: VARCHAR(255)
+            constraints:
+                nullable: false
+        - column:
+            name: period
+            type: INTEGER
+            constraints:
+                nullable: false
+            defaultValue: 4
+        - column:
+            name: startdate
+            type: date
+            constraints:
+                nullable: false
+        - column:
+            name: duedate
+            type: BIGINT
+            constraints:
+                nullable: false
+        - column:
+            name: latedate
+            type: BIGINT
+        - column:
+            name: link
+            type: BYTEA
+        - column:
+            name: periodicity
+            type: INTEGER
+            constraints:
+                nullable: false
+            defaultValue: 4
+        tableName: bills
+- changeSet:
+    id: 1641917126586-2
+    author: dphillips
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: income_pkey
+            name: id
+            type: UUID
+        - column:
+            name: amount
+            type: numeric(19, 2)
+            constraints:
+                nullable: false
+        - column:
+            name: currency
+            type: INTEGER
+            constraints:
+                nullable: false
+            defaultValue: 1
+        - column:
+            name: enddate
+            type: date
+        - column:
+            name: name
+            type: VARCHAR(255)
+            constraints:
+                nullable: false
+        - column:
+            name: period
+            type: INTEGER
+            constraints:
+                nullable: false
+            defaultValue: 4
+        - column:
+            name: startdate
+            type: date
+            constraints:
+                nullable: false
+            defaultValue: now()
+        tableName: income
+- changeSet:
+    id: 1641917126586-3
+    author: dphillips
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: months_pkey
+            name: id
+            type: UUID
+        - column:
+            name: bill_id
+            type: UUID
+            constraints:
+                nullable: false
+        - column:
+            name: day
+            type: INTEGER
+            constraints:
+                nullable: false
+        - column:
+            name: month
+            type: INTEGER
+            constraints:
+                nullable: false
+        - column:
+            name: paid
+            type: BOOLEAN
+        - column:
+            name: year
+            type: INTEGER
+            constraints:
+                nullable: false
+        tableName: months
+- changeSet:
+    id: 1641917126586-4
+    author: dphillips
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: bill_id
+        baseTableName: months
+        constraintName: fkd4yf247i9uj36608dv0c62uqy
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: bills
+        validate: true
+- changeSet:
+    id: 1641917126586-5
+    changes:
+    - addUniqueConstraint:
+        columnNames: bill_id,year,month,day
+        constraintName: unique_bill_status_entry
+        tableName: months
+- changeSet:
+    id: 1641917126586-6
+    changes:
+    -

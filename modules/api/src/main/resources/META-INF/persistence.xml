@@ -1,0 +1,42 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+  
+  <persistence-unit name="dev">
+    <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
+    <class>com.zanclus.models.Income</class>
+    <class>com.zanclus.models.Bill</class>
+    <class>com.zanclus.models.Month</class>
+    
+    <properties>
+      
+      <!-- PostgreSQL -->
+      <property name="javax.persistence.jdbc.url"
+                value="postgresql://localhost:5432/budjet"/>
+      
+      <!-- Credentials -->
+      <property name="javax.persistence.jdbc.user"
+                value="budjet"/>
+      <property name="javax.persistence.jdbc.password"
+                value="budjet"/>
+      
+      <!-- The Vert.x SQL Client connection pool size -->
+      <property name="hibernate.connection.pool_size"
+                value="10"/>
+      
+      <!-- Automatic schema export -->
+      <property name="javax.persistence.schema-generation.database.action"
+                value="create"/>
+      <property name="javax.persistence.create-database-schemas" value="true"/>
+      
+      <!-- SQL statement logging -->
+      <property name="hibernate.show_sql" value="true"/>
+      <property name="hibernate.format_sql" value="true"/>
+      <property name="hibernate.highlight_sql" value="true"/>
+      <property name="hibernate.hibernate.hbm2ddl.auto" value="update"/>
+    
+    </properties>
+  
+  </persistence-unit>
+</persistence>

@@ -1,0 +1,754 @@
+openapi: 3.0.2
+info:
+  description: My Application
+  title: My App
+  version: 1.0.0
+servers:
+- description: API URL
+  url: '{proto}://{domain}:{port}{base_path}'
+  variables:
+    proto:
+      default: http
+      enum:
+      - http
+      - https
+    base_path:
+      default: /
+      enum:
+      - /
+      - /api/v1
+    domain:
+      default: localhost
+      enum:
+      - localhost
+    port:
+      default: "7080"
+      enum:
+      - "7080"
+tags:
+- name: system
+- name: bills
+- name: income
+- name: cashflow
+- name: BudJet
+paths:
+  /user/current:
+    get:
+      description: Get the currently logged in user
+      operationId: getCurrentUser
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: OK
+      tags:
+      - BudJet
+      - system
+      x-accepts: application/json
+  /bills:
+    get:
+      description: Retrieve an array of all Bills ordered by next due date
+      operationId: getAllBills
+      parameters:
+      - explode: true
+        in: query
+        name: startDate
+        required: false
+        schema:
+          format: date
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: endDate
+        required: false
+        schema:
+          format: date
+          nullable: true
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Bill'
+                minItems: 0
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - bills
+      x-accepts: application/json
+    post:
+      description: Adds a new bill item to the system
+      operationId: addBill
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewBill'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+          description: CREATED
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - bills
+      x-contentType: application/json
+      x-accepts: application/json
+  /bills/due:
+    get:
+      description: Returns Bills along with Month information for due dates
+      operationId: getDueBills
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - bills
+      x-accepts: application/json
+  /bill/{id}:
+    delete:
+      description: Delete the Bill specified by the ID
+      operationId: deleteBill
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: NO CONTENT
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - bills
+      x-accepts: application/json
+    get:
+      description: Retrieve the Bill specified by the ID
+      operationId: getBill
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - bills
+      x-accepts: application/json
+    put:
+      description: Updates the details about a bill item in the system
+      operationId: updateBill
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bill'
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+          description: ACCEPTED
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - bills
+      x-contentType: application/json
+      x-accepts: application/json
+  /bill/{id}/{year}/{month}:
+    put:
+      description: Update the paid status for a given month/year for a given bill
+        ID
+      operationId: updatePaidStatus
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: year
+        required: true
+        schema:
+          format: int64
+          type: number
+        style: simple
+      - explode: false
+        in: path
+        name: month
+        required: true
+        schema:
+          format: int64
+          type: number
+        style: simple
+      - explode: true
+        in: query
+        name: paid
+        required: true
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Month'
+          description: ACCEPTED
+      tags:
+      - BudJet
+      - bills
+      x-accepts: application/json
+  /income:
+    get:
+      description: Retrieve a list of income sources
+      operationId: getIncomeSources
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Income'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - income
+      x-accepts: application/json
+    post:
+      description: Adds a new income source using the properties of the request body
+      operationId: addIncomeSource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewIncome'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Income'
+          description: CREATED
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - income
+      x-contentType: application/json
+      x-accepts: application/json
+  /income/{id}:
+    delete:
+      description: Delete the Income specified by the ID
+      operationId: deleteIncome
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: NO CONTENT
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - income
+      x-accepts: application/json
+    get:
+      description: Retrieve the Income specified by the ID
+      operationId: getIncome
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Income'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - income
+      x-accepts: application/json
+    put:
+      description: Updates the details about a income item in the system
+      operationId: updateIncome
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Income'
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Income'
+          description: ACCEPTED
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - income
+      x-contentType: application/json
+      x-accepts: application/json
+  /cashflow:
+    get:
+      description: Get the cashflow information for the next few weeks given a starting
+        balance
+      operationId: getCashFlow
+      parameters:
+      - explode: true
+        in: query
+        name: start_date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: end_date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: startingBalance
+        required: false
+        schema:
+          default: 0.0
+          multipleOf: 0.01
+          type: number
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DailyBalance'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - cashflow
+      x-accepts: application/json
+  /health:
+    get:
+      operationId: checkHealth
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+          description: Error
+      tags:
+      - BudJet
+      - system
+      x-accepts: application/json
+components:
+  responses:
+    Error:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+      description: Error
+  schemas:
+    Currency:
+      default: USD
+      enum:
+      - GBP
+      - USD
+      - EUR
+      type: string
+    Period:
+      default: monthly
+      enum:
+      - once
+      - weekly
+      - biweekly
+      - semimonthly
+      - monthly
+      - quarterly
+      - semianually
+      - annually
+      type: string
+    Errors:
+      example:
+        msg: msg
+        code: 47
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        msg:
+          type: string
+        code:
+          maximum: 599
+          minimum: 0
+          type: integer
+      required:
+      - code
+      type: object
+    Month:
+      example:
+        month: 7
+        year: 2039
+        paid: false
+        bill: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        day: 5
+      properties:
+        id:
+          format: uuid
+          type: string
+          x-java-field-annotations:
+          - '@javax.persistence.Id'
+          - '@javax.persistence.GeneratedValue(generator = "UUID")'
+          - '@org.hibernate.annotations.GenericGenerator(name = "UUID", strategy =
+            "org.hibernate.id.UUIDGenerator")'
+          - '@javax.persistence.Column(name = "id", updatable = false, nullable =
+            false)'
+        bill:
+          description: Reference to the bill ID for this month status
+          format: uuid
+          type: string
+          x-java-field-annotations:
+          - '@javax.persistence.Column(name = "bill_id")'
+        year:
+          maximum: 2260
+          minimum: 2020
+          type: integer
+        month:
+          maximum: 12
+          minimum: 1
+          nullable: false
+          type: integer
+        day:
+          maximum: 31
+          minimum: 1
+          type: integer
+        paid:
+          default: false
+          nullable: false
+          type: boolean
+      required:
+      - day
+      - month
+      - paid
+      - year
+      type: object
+      x-java-class-annotations:
+      - '@javax.persistence.Entity'
+      - '@javax.persistence.Table(name = "months")'
+    NewBill:
+      example:
+        late_date: 5
+        amount: 240.24845713830345
+        name: name
+        due_date: 19
+        link: https://openapi-generator.tech
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        start_date: 2000-01-23
+      properties:
+        id:
+          format: uuid
+          type: string
+          x-java-field-annotations:
+          - '@javax.persistence.Id'
+          - '@javax.persistence.GeneratedValue(generator = "UUID")'
+          - '@org.hibernate.annotations.GenericGenerator(name = "UUID", strategy =
+            "org.hibernate.id.UUIDGenerator")'
+          - '@javax.persistence.Column(name = "id", updatable = false, nullable =
+            false)'
+        name:
+          type: string
+        amount:
+          maximum: 3000
+          minimum: 0
+          multipleOf: 0.01
+          type: number
+        due_date:
+          format: int64
+          maximum: 31
+          minimum: 1
+          type: integer
+        late_date:
+          format: int64
+          maximum: 31
+          minimum: 1
+          type: integer
+        periodicity:
+          $ref: '#/components/schemas/Period'
+        start_date:
+          format: date
+          type: string
+        link:
+          format: uri
+          type: string
+        currency:
+          $ref: '#/components/shcema/Currency'
+      required:
+      - amount
+      - currency
+      - due_date
+      - name
+      type: object
+    Bill:
+      allOf:
+      - $ref: '#/components/schemas/NewBill'
+      - $ref: '#/components/schemas/Bill_allOf'
+      required:
+      - amount
+      - due_date
+      - id
+      - months
+      - name
+      type: object
+      x-java-class-annotations:
+      - '@javax.persistence.Entity'
+      - '@javax.persistence.Table(name = "bills")'
+    User:
+      additionalProperties: true
+      example:
+        name: name
+        email: email
+      properties:
+        email:
+          format: email
+          type: string
+        name:
+          type: string
+      type: object
+    NewIncome:
+      example:
+        end_date: 2000-01-23
+        amount: 0.08008281904610115
+        name: name
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        start_date: 2000-01-23
+      properties:
+        id:
+          format: uuid
+          type: string
+          x-java-field-annotations:
+          - '@javax.persistence.Id'
+          - '@javax.persistence.GeneratedValue(generator = "UUID")'
+          - '@org.hibernate.annotations.GenericGenerator(name = "UUID", strategy =
+            "org.hibernate.id.UUIDGenerator")'
+          - '@javax.persistence.Column(name = "id", updatable = false, nullable =
+            false)'
+        name:
+          type: string
+        amount:
+          minimum: 0.0
+          multipleOf: 0.01
+          type: number
+        period:
+          $ref: '#/components/schemas/Period'
+        start_date:
+          format: date
+          type: string
+        end_date:
+          format: date
+          type: string
+        currency:
+          $ref: '#/components/schema/Currency'
+      required:
+      - amount
+      - name
+      type: object
+    Income:
+      allOf:
+      - $ref: '#/components/schemas/NewIncome'
+      required:
+      - id
+      type: object
+      x-java-class-annotations:
+      - '@javax.persistence.Entity'
+      - '@javax.persistence.Table(name = "income")'
+    DailyBalance:
+      example:
+        date: 2000-01-23
+        income:
+        - null
+        - null
+        balance: 0.8008281904610115
+        expenditures:
+        - null
+        - null
+      properties:
+        date:
+          format: date
+          type: string
+        balance:
+          multipleOf: 0.01
+          type: number
+        currency:
+          $ref: '#/components/schema/Currency'
+        income:
+          items:
+            $ref: '#/components/schemas/Income'
+          type: array
+        expenditures:
+          items:
+            $ref: '#/components/schemas/Bill'
+          type: array
+      required:
+      - balance
+      - date
+      type: object
+    Bill_allOf:
+      properties:
+        months:
+          items:
+            $ref: '#/components/schemas/Month'
+          maxItems: 10
+          minItems: 10
+          type: array
+          x-java-field-annotations:
+          - '@javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL,
+            orphanRemoval = true)'
+          - '@javax.persistence.JoinColumn(name = "bill_id")'
+          - '@javax.persistence.OrderBy("year,month,day")'
+      type: object
