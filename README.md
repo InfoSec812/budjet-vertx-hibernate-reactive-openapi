@@ -17,3 +17,10 @@ mvn clean verify
 mvn vertx:run -pl modules/api
 ```
 
+
+
+### NOTES
+
+This application was bootstrapped using the [OpenAPI Vert.x Maven Archetype](https://github.com/redhat-appdev-practice/openapi-vertx-archetype) created by the [Red Hat Cloud-Native Runtimes
+Practice](https://appdev.consulting.redhat.com/). 
+
