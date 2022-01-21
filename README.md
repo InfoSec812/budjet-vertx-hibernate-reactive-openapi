@@ -1,4 +1,4 @@
-# OpenAPI Contract-First with Vert.x and jOOQ
+# OpenAPI Contract-First with Vert.x and Hibernate Reactive
 
 ## Overview
 
