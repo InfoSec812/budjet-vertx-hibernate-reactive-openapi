@@ -37,6 +37,7 @@ paths:
     get:
       description: Get the currently logged in user
       operationId: getCurrentUser
+      x-vertx-event-bus: budget.system
       tags:
       - BudJet
       - system
@@ -50,6 +51,7 @@ paths:
   /bills:
     get:
       operationId: getAllBills
+      x-vertx-event-bus: budjet.bills
       description: Retrieve an array of all Bills ordered by next due date
       # security:
       #   - Keycloak: ['view', 'edit', 'admin']
@@ -85,6 +87,7 @@ paths:
           required: false
     post:
       operationId: addBill
+      x-vertx-event-bus: budjet.bills
       description: Adds a new bill item to the system
       # security:
       #   - Keycloak: ['edit', 'admin']
@@ -108,6 +111,7 @@ paths:
   /bills/due:
     get:
       operationId: getDueBills
+      x-vertx-event-bus: budjet.bills
       description: Returns Bills along with Month information for due dates
       tags:
       - BudJet
@@ -124,6 +128,7 @@ paths:
   /bill/{id}:
     get:
       operationId: getBill
+      x-vertx-event-bus: budjet.bills
       description: Retrieve the Bill specified by the ID
       # security:
       #   - Keycloak: ['view', 'edit', 'admin']
@@ -141,6 +146,7 @@ paths:
           $ref: '#/components/responses/Error'
     put:
       operationId: updateBill
+      x-vertx-event-bus: budjet.bills
       description: Updates the details about a bill item in the system
       # security:
       #   - Keycloak: ['edit', 'admin']
@@ -163,6 +169,7 @@ paths:
           $ref: '#/components/responses/Error'
     delete:
       operationId: deleteBill
+      x-vertx-event-bus: budjet.bills
       description: Delete the Bill specified by the ID
       # security:
       #   - Keycloak: ['edit', 'admin']
@@ -185,6 +192,7 @@ paths:
     put:
       description: Update the paid status for a given month/year for a given bill ID
       operationId: updatePaidStatus
+      x-vertx-event-bus: budjet.bills
       # security:
       #   - Keycloak: ['edit', 'admin']
       tags:
@@ -224,6 +232,7 @@ paths:
   /income:
     get:
       operationId: getIncomeSources
+      x-vertx-event-bus: budjet.income
       description: Retrieve a list of income sources
       tags:
       - BudJet
@@ -256,6 +265,7 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: addIncomeSource
+      x-vertx-event-bus: budjet.income
       description: Adds a new income source using the properties of the request body
       tags:
       - BudJet
@@ -277,6 +287,7 @@ paths:
   /income/{id}:
     get:
       operationId: getIncome
+      x-vertx-event-bus: budjet.income
       description: Retrieve the Income specified by the ID
       # security:
       #   - Keycloak: ['view', 'edit', 'admin']
@@ -294,6 +305,7 @@ paths:
           $ref: '#/components/responses/Error'
     put:
       operationId: updateIncome
+      x-vertx-event-bus: budjet.income
       description: Updates the details about a income item in the system
       # security:
       #   - Keycloak: ['edit', 'admin']
@@ -316,6 +328,7 @@ paths:
           $ref: '#/components/responses/Error'
     delete:
       operationId: deleteIncome
+      x-vertx-event-bus: budjet.income
       description: Delete the Income specified by the ID
       # security:
       #   - Keycloak: ['edit', 'admin']
@@ -337,6 +350,7 @@ paths:
   /cashflow:
     get:
       operationId: getCashFlow
+      x-vertx-event-bus: budjet.income
       description: Get the cashflow information for the next few weeks given a starting balance
       tags:
       - BudJet
@@ -376,6 +390,7 @@ paths:
   /health:
     get:
       operationId: checkHealth
+      x-vertx-event-bus: budjet.system
       tags:
       - BudJet
       - system
