@@ -228,6 +228,21 @@ paths:
       tags:
       - BudJet
       - income
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+            nullable: true
+          required: false
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+            nullable: true
+          required: false
       responses:
         '200':
           description: 'OK'
@@ -495,6 +510,9 @@ components:
         start_date:
           type: string
           format: date
+        end_date:
+          type: string
+          format: date
         link:
           type: string
           format: uri
@@ -524,9 +542,17 @@ components:
                   FROM days_in_period d
                 )
                 SELECT
-                  d.date,
-                  b.*
-                FROM bills b, dates d
+                  b.*,
+                  m.*
+                FROM dates d
+                INNER JOIN bills b ON
+                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                  (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                  (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                  (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                  (b.startdate = d.date AND b.period = 0)
                 LEFT JOIN 
                   months m
                 ON
@@ -534,14 +560,7 @@ components:
                   m.day = d.dom AND
                   m.month = d.month AND
                   m.year = d.year
-                WHERE
-                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (b.startdate = d.date AND b.period = 0);
+                ORDER BY d.date ASC;
               """
             )
       required:
@@ -608,6 +627,36 @@ components:
       x-java-class-annotations:
         - '@javax.persistence.Entity'
         - '@javax.persistence.Table(name = "income")'
+        - >-
+            @javax.persistence.NamedNativeQuery(
+              name = "getIncomeForPeriod",
+              resultClass = Income.class,
+              query = """
+              WITH days_in_period AS (
+                  SELECT generate_series(?, ?, '1 day'::interval)::date as date
+              ),
+                   dates AS (
+                       SELECT
+                           EXTRACT(ISODOW FROM d.date) AS dow,
+                           EXTRACT(DAY FROM d.date) AS dom,
+                           EXTRACT(WEEK FROM d.date) AS week,
+                           EXTRACT(MONTH FROM d.date) AS month,
+                           d.date
+                       FROM days_in_period d
+                   )
+              SELECT
+                  i.*
+              FROM dates d
+              INNER JOIN income i
+              ON
+                  ((EXTRACT(MONTH FROM age(d.date, i.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM i.startdate) = d.dom) AND i.period = 7 AND (i.enddate IS NULL OR i.enddate >= d.date)) OR
+                  ((EXTRACT(MONTH FROM age(d.date, i.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM i.startdate) = d.dom) AND i.period = 6 AND (i.enddate IS NULL OR i.enddate >= d.date)) OR
+                  ((EXTRACT(MONTH FROM age(d.date, i.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM i.startdate) = d.dom) AND i.period = 5 AND (i.enddate IS NULL OR i.enddate >= d.date)) OR
+                  (EXTRACT(DAY FROM i.startdate) = d.dom AND i.period = 4 AND (i.enddate IS NULL OR i.enddate >= d.date)) OR
+                  (((EXTRACT(WEEK FROM i.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM i.startdate) = d.dow) AND i.period = 2 AND (i.enddate IS NULL OR i.enddate >= d.date)) OR
+                  (EXTRACT(ISODOW FROM i.startdate) = d.dow AND i.period = 1 AND (i.enddate IS NULL OR i.enddate >= d.date)) OR
+                  (i.startdate = d.date AND i.period = 0)
+              ORDER BY d.date ASC""")
       required:
       - id
       allOf:
