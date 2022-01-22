@@ -678,6 +678,30 @@ components:
       x-java-class-annotations:
       - '@javax.persistence.Entity'
       - '@javax.persistence.Table(name = "bills")'
+      - "@javax.persistence.NamedNativeQuery(\n  name = \"getBillsForPeriod\",\n \
+        \ resultClass = Bill.class,\n  query = \"\"\"\n    WITH days_in_period AS\
+        \ (\n      SELECT generate_series(?, ?, '1 day'::interval)::date as date\n\
+        \    ),\n    dates AS (\n      SELECT\n        EXTRACT(ISODOW FROM d.date)\
+        \ AS dow,\n        EXTRACT(DAY FROM d.date) AS dom,\n        EXTRACT(WEEK\
+        \ FROM d.date) AS week,\n        EXTRACT(MONTH FROM d.date) AS month,\n  \
+        \      EXTRACT(YEAR FROM d.date) AS year,\n        d.date\n      FROM days_in_period\
+        \ d\n    )\n    SELECT\n      d.date,\n      b.*\n    FROM bills b, dates\
+        \ d\n    LEFT JOIN \n      months m\n    ON\n      m.bill_id = b.id AND\n\
+        \      m.day = d.dom AND\n      m.month = d.month AND\n      m.year = d.year\n\
+        \    WHERE\n      ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0)\
+        \ AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate\
+        \ IS NULL OR b.enddate >= d.date)) OR\n      ((EXTRACT(MONTH FROM age(d.date,\
+        \ b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period\
+        \ = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR\n      ((EXTRACT(MONTH\
+        \ FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate)\
+        \ = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date))\
+        \ OR\n      (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate\
+        \ IS NULL OR b.enddate >= d.date)) OR\n      (((EXTRACT(WEEK FROM b.startdate)\
+        \ % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND\
+        \ b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR\n      (EXTRACT(ISODOW\
+        \ FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate\
+        \ >= d.date)) OR\n      (b.startdate = d.date AND b.period = 0);\n  \"\"\"\
+        \n)"
     User:
       additionalProperties: true
       example:

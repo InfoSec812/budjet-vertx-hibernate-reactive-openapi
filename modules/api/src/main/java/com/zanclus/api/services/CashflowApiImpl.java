@@ -9,8 +9,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class CashflowApiImpl implements CashflowApi {
-	@Override
-	public void getCashFlow(LocalDate startDate, LocalDate endDate, BigDecimal startingBalance, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
-	
-	}
+    @Override
+    public void getCashFlow(LocalDate startDate, LocalDate endDate, BigDecimal startingBalance, ServiceRequest ctx,
+            Handler<AsyncResult<ServiceResponse>> handler) {
+
+    }
 }
