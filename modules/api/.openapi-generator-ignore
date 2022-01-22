@@ -3,3 +3,4 @@ pom.xml
 **/*Impl.java
 **/HttpServerVerticle.java
 README.md
+**/openapi.yaml
