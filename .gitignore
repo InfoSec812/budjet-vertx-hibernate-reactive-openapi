@@ -6,3 +6,4 @@
 .mvn/wrapper/*.jar
 **/.openapi-generator
 !**/.openapi-generator-ignore
+**/openapi.yaml
