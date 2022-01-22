@@ -161,8 +161,6 @@
                         <configuration>
                             <directories>
                                 <directory>${project.basedir}/src/gen/java</directory>
-                                <directory>${project.build.sourceDirectory}</directory>
-                                <directory>${project.build.testSourceDirectory}</directory>
                             </directories>
                         </configuration>
                     </execution>
