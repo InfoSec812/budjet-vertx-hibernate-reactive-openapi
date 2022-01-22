@@ -143,7 +143,7 @@
           <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.12</version>
+            <version>1.21</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -188,8 +188,6 @@
             <configuration>
               <directories>
                 <directory>${project.basedir}/src/gen/java</directory>
-                <directory>${project.build.sourceDirectory}</directory>
-                <directory>${project.build.testSourceDirectory}</directory>
               </directories>
             </configuration>
           </execution>
