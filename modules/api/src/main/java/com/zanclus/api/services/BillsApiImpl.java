@@ -3,9 +3,11 @@ package com.zanclus.api.services;
 import com.zanclus.models.Bill;
 import com.zanclus.models.Errors;
 import com.zanclus.models.NewBill;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -19,10 +21,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class BillsApiImpl implements BillsApi {
-
+    
     Mutiny.SessionFactory sessionFactory;
 
     public BillsApiImpl(Mutiny.SessionFactory sessionFactory) {
@@ -65,8 +66,8 @@ public class BillsApiImpl implements BillsApi {
     @Override
     public void addBill(NewBill newBill, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
         UniHelper.toFuture(sessionFactory.withSession(session -> session.persist(newBill)).replaceWith(newBill)
-                .map(this::mapEntityToServiceResponse).map((sr) -> sr.setStatusCode(200).setStatusMessage("OK"))
-                .onFailure().recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler::handle);
+                .map(this::mapEntityToServiceResponse).map(sr -> sr.setStatusCode(200).setStatusMessage("OK"))
+                .onFailure().recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
     }
 
     @Override
@@ -76,17 +77,39 @@ public class BillsApiImpl implements BillsApi {
                         session -> session.find(Bill.class, UUID.fromString(id)).chain(this::mapNullToNotFound)
                                 .chain(session::remove).chain(session::flush).map(this::mapToNoContentResponse)
                                 .onFailure(NoResultException.class).recoverWithItem(this::mapNoResultToNotFound)))
-                .onComplete(handler::handle);
+                .onComplete(handler);
     }
 
     @Override
     public void getAllBills(LocalDate startDate, LocalDate endDate, ServiceRequest ctx,
             Handler<AsyncResult<ServiceResponse>> handler) {
-        final var query = "SELECT b.* FROM bills b";
-        UniHelper.toFuture(sessionFactory
-                .withSession(session -> session.createNamedQuery("getBillsForPeriod", Bill.class)
-                        .setParameter(1, startDate).setParameter(2, endDate).getResultList())
-                .map(this::mapListToServiceResponse).onFailure().recoverWithItem(this::mapThrowableToServiceResponse))
-                .onComplete(handler::handle);
+        final var now = LocalDate.now();
+        
+        if (startDate == null) {
+            startDate = now.minusDays(now.getDayOfMonth() - 1L);
+        }
+        
+        if (endDate == null) {
+            endDate = now.plusMonths(3);
+        }
+        
+        if (endDate.isBefore(startDate)) {
+            JsonObject errBody = new JsonObject();
+            errBody.put("message", "End data cannot be before start date in query parameters");
+            errBody.put("code", 400);
+            ServiceResponse badRequest = new ServiceResponse();
+            badRequest.setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
+            badRequest.setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase());
+            badRequest.setPayload(errBody.toBuffer());
+            handler.handle(Future.succeededFuture(badRequest));
+        } else {
+            final LocalDate finalStartDate = startDate;
+            final LocalDate finalEndDate = endDate;
+            UniHelper.toFuture(sessionFactory
+                    .withSession(session -> session.createNamedQuery("getBillsForPeriod", Bill.class)
+                        .setParameter(1, finalStartDate).setParameter(2, finalEndDate).getResultList())
+                    .map(this::mapListToServiceResponse).onFailure().recoverWithItem(this::mapThrowableToServiceResponse))
+                .onComplete(handler);
+        }
     }
 }
