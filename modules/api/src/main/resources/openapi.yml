@@ -537,7 +537,7 @@ components:
           type: string
           format: uri
         currency:
-          $ref: '#/components/shcema/Currency'
+          $ref: '#/components/schemas/Currency'
     Bill:
       type: object
       x-java-class-annotations:
@@ -641,7 +641,7 @@ components:
           type: string
           format: date
         currency:
-          $ref: '#/components/schema/Currency'
+          $ref: '#/components/schemas/Currency'
     Income:
       type: object
       x-java-class-annotations:
@@ -694,7 +694,7 @@ components:
           type: number
           multipleOf: 0.01
         currency:
-          $ref: '#/components/schema/Currency'
+          $ref: '#/components/schemas/Currency'
         income:
           type: array
           items:
