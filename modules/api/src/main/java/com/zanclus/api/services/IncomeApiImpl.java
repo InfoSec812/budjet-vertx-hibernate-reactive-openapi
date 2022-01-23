@@ -10,12 +10,14 @@ import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import javax.persistence.NoResultException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class IncomeApiImpl extends AbstractService implements IncomeApi {
@@ -27,9 +29,10 @@ public class IncomeApiImpl extends AbstractService implements IncomeApi {
     }
 
     @Override
-    public void addIncomeSource(NewIncome newIncome, ServiceRequest ctx,
-            Handler<AsyncResult<ServiceResponse>> handler) {
-        UniHelper.toFuture(sessionFactory.withSession(session -> session.persist(newIncome)).replaceWith(newIncome)
+    public void addIncomeSource(JsonObject newIncome, ServiceRequest ctx,
+                                Handler<AsyncResult<ServiceResponse>> handler) {
+        var parsedNewIncome = newIncome.mapTo(NewIncome.class);
+        UniHelper.toFuture(sessionFactory.withSession(session -> session.persist(parsedNewIncome)).replaceWith(() -> parsedNewIncome)
                 .map(this::mapEntityToServiceResponse).map(sr -> sr.setStatusCode(200).setStatusMessage("OK"))
                 .onFailure().recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
     }
@@ -52,8 +55,10 @@ public class IncomeApiImpl extends AbstractService implements IncomeApi {
     }
 
     @Override
-    public void getIncomeSources(LocalDate startDate, LocalDate endDate, ServiceRequest ctx,
+    public void getIncomeSources(String startDate, String endDate, ServiceRequest ctx,
             Handler<AsyncResult<ServiceResponse>> handler) {
+        var parsedStartDate = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
+        var parsedEndDate = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
         
         Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun =
             (LocalDate start, LocalDate end, Handler<AsyncResult<ServiceResponse>> hdlr) -> UniHelper.toFuture(sessionFactory
@@ -61,15 +66,16 @@ public class IncomeApiImpl extends AbstractService implements IncomeApi {
                     .setParameter(1, start).setParameter(2, end).getResultList())
                 .map(this::mapListToServiceResponse).onFailure()
                 .recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
-        checkDates(startDate, endDate, fun, handler);
+        checkDates(parsedStartDate, parsedEndDate, fun, handler);
     }
     
     @Override
-    public void updateIncome(String id, Income income, ServiceRequest ctx,
+    public void updateIncome(String id, JsonObject income, ServiceRequest ctx,
             Handler<AsyncResult<ServiceResponse>> handler) {
-        if (income.getId().toString().contentEquals(id)) {
+        var parsedIncome = income.mapTo(Income.class);
+        if (parsedIncome.getId().toString().contentEquals(id)) {
             UniHelper.toFuture(sessionFactory.withSession(
-                    session -> session.merge(income)
+                    session -> session.merge(parsedIncome)
                 )
                 .map(this::mapEntityToServiceResponse)
                 .onFailure().recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);

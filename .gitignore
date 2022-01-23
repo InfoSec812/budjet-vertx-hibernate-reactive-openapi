@@ -1,7 +1,6 @@
 **/target
 **/*.iml
 .idea
-**/templates
 **/src/gen
 .mvn/wrapper/*.jar
 **/.openapi-generator

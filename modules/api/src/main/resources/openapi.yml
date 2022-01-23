@@ -208,14 +208,14 @@ paths:
         - in: path
           name: year
           schema:
-            type: number
-            format: int64
+            type: integer
+            format: int32
           required: true
         - in: path
           name: month
           schema:
-            type: number
-            format: int64
+            type: integer
+            format: int32
           required: true
         - in: query
           name: paid
@@ -373,6 +373,7 @@ paths:
           name: startingBalance
           schema:
             type: number
+            format: float
             multipleOf: 0.01
             default: 0.00
       responses:
@@ -443,6 +444,7 @@ components:
           type: string
         code:
           type: integer
+          format: int32
           maximum: 599
           minimum: 0
     Month:
@@ -472,15 +474,18 @@ components:
             - '@javax.persistence.Column(name = "bill_id")'
         year:
           type: integer
-          minimum: 2020
-          maximum: 2260
+          format: int32
+          minimum: 1900
+          maximum: 3000
         month:
           type: integer
+          format: int32
           minimum: 1
           maximum: 12
           nullable: false
         day:
           type: integer
+          format: int32
           minimum: 1
           maximum: 31
         paid:
@@ -512,12 +517,12 @@ components:
           multipleOf: 0.01
         due_date:
           type: integer
-          format: int64
+          format: int32
           minimum: 1
           maximum: 31
         late_date:
           type: integer
-          format: int64
+          format: int32
           minimum: 1
           maximum: 31
         periodicity:

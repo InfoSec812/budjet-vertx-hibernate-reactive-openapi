@@ -15,6 +15,7 @@ import javax.persistence.NoResultException;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public abstract class AbstractService {
@@ -32,12 +33,12 @@ public abstract class AbstractService {
         Errors err = new Errors();
         err.setMsg(t.getLocalizedMessage());
         err.setCode(500);
-        err.setTimestamp(LocalDateTime.now());
+        err.setTimestamp(OffsetDateTime.now());
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
     }
 
     ServiceResponse mapNoResultToNotFound(Throwable e) {
-        var err = new Errors().code(404).msg("Not found").timestamp(LocalDateTime.now());
+        var err = new Errors().code(404).msg("Not found").timestamp(OffsetDateTime.now());
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
     }
 
