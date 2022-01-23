@@ -33,6 +33,11 @@ public interface {{classname}}  {
 {{/operation}}
 {{/operations}}
 
+  /**
+    * A method used by the Vert.x ServiceProxy to create instances of this Service
+    *
+    * @param vertx The {@link Vertx} instance for the context of this Service
+    */
   static {{classname}} create(Vertx vertx) {
     return new {{classname}}Impl(vertx);
   }
