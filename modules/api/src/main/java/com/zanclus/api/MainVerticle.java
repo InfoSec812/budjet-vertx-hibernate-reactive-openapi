@@ -7,8 +7,6 @@ import com.zanclus.api.services.*;
 import io.smallrye.mutiny.vertx.core.AbstractVerticle;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.json.jackson.DatabindCodec;
-import io.vertx.ext.web.api.service.RouteToEBServiceHandler;
-import io.vertx.ext.web.openapi.OpenAPILoaderOptions;
 import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.mutiny.core.http.HttpServer;
 import io.vertx.mutiny.ext.web.Router;
@@ -29,11 +27,21 @@ public class MainVerticle extends AbstractVerticle {
     
     private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
     
+    /**
+     * Initialize Hibernate/JPA from the `persistence.xml`
+     * @return A {@link Uni} which will resolve to a {@link Mutiny.SessionFactory} on success
+     */
     static Uni<Mutiny.SessionFactory> initHibernate() {
         return Uni.createFrom().item(Persistence.createEntityManagerFactory("dev")
             .unwrap(Mutiny.SessionFactory.class));
     }
     
+    /**
+     * Initialize and bind the WebApiService instances and the load the OpenAPI contract
+     * @param sessionFactory The {@link Mutiny.SessionFactory} used in the WebApiService
+     *                       instances for interacting with the database
+     * @return A {@link Uni} which will resolve to a {@link RouterBuilder} on success
+     */
     Uni<RouterBuilder> initOpenAPI(Mutiny.SessionFactory sessionFactory) {
         SystemApiImpl sysApi = (SystemApiImpl)SystemApi.create(vertx.getDelegate());
         sysApi.setSessionFactory(sessionFactory);
@@ -58,6 +66,11 @@ public class MainVerticle extends AbstractVerticle {
         return RouterBuilder.create(vertx, "openapi.yml");
     }
     
+    /**
+     * Mount the WebApiServices to the OpenAPI RouterBuilder
+     * @param routerBuilder The {@link RouterBuilder} created from the OpenAPI contract
+     * @return a {@link Uni} which resolves to a {@link Router} on success
+     */
     Uni<Router> mapRoutes(RouterBuilder routerBuilder) {
         RouterBuilderOptions routerOptions = new RouterBuilderOptions()
                                                  .setMountNotImplementedHandler(true);
@@ -68,6 +81,12 @@ public class MainVerticle extends AbstractVerticle {
         return Uni.createFrom().item(routerBuilder.createRouter());
     }
     
+    /**
+     * With the provided Router, create an HTTP Server and mount the router
+     * @param router A {@link Router} with the OpenAPI endpoints handled by the
+     *               WebApiServices
+     * @return A {@link Uni} which resolves to a {@link HttpServer} on success
+     */
     Uni<HttpServer> createServer(Router router) {
         Router parentRouter = Router.router(vertx);
         parentRouter.route().handler(BodyHandler.create());
@@ -78,6 +97,10 @@ public class MainVerticle extends AbstractVerticle {
         return vertx.createHttpServer().requestHandler(parentRouter).listen(8080);
     }
     
+    /**
+     * Log information about all requests
+     * @param ctx The {@link RoutingContext} of each request
+     */
     private void logAllRequests(RoutingContext ctx) {
         LOG.info("Path Params: {}", ctx.pathParams());
         LOG.info("Query Params: {}", ctx.queryParams());
@@ -86,9 +109,15 @@ public class MainVerticle extends AbstractVerticle {
         ctx.next();
     }
     
+    /**
+     * Initialize and start this Verticle
+     * @return A {@link Uni} which resolves successfully to a {@link Void} to indicate a successful start
+     */
     @Override
     public Uni<Void> asyncStart() {
-        LOG.info("Application Started");
+        LOG.info("Application initializing");
+        
+        // Configure the default Jackson object mapper
         var objectMapper = DatabindCodec.mapper();
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
@@ -96,9 +125,11 @@ public class MainVerticle extends AbstractVerticle {
         JavaTimeModule jsr310Module = new JavaTimeModule();
         objectMapper.registerModule(jsr310Module);
         
-        Uni<Mutiny.SessionFactory> startHibernate = Uni.createFrom().deferred(MainVerticle::initHibernate);
+        // Create a deferred Uni wrapper around the blocking call to create the persistence context
+        Uni<Mutiny.SessionFactory> createPersistenceContext = Uni.createFrom().deferred(MainVerticle::initHibernate);
 
-        return vertx.executeBlocking(startHibernate)
+        // Run the entire chain of async operations and resolve the Verticle startup
+        return vertx.executeBlocking(createPersistenceContext)
                     .chain(this::initOpenAPI)
                     .chain(this::mapRoutes)
                     .chain(this::createServer)
