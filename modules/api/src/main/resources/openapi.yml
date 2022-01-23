@@ -163,6 +163,7 @@ paths:
       - BudJet
       - bills
       requestBody:
+        description: The Bill object to update
         content:
           application/json:
             schema:
@@ -195,6 +196,7 @@ paths:
       - in: path
         required: true
         name: id
+        description: The ID indicating which Bill to delete
         schema:
           type: string
           format: uuid
@@ -212,24 +214,28 @@ paths:
       parameters:
         - in: path
           name: id
+          description: The ID indicating which Bill to delete
           schema:
             type: string
             format: uuid
           required: true
         - in: path
           name: year
+          description: The year part of the payment being indicated
           schema:
             type: integer
             format: int32
           required: true
         - in: path
           name: month
+          description: The month part of the payment being indicated
           schema:
             type: integer
             format: int32
           required: true
         - in: query
           name: paid
+          description: A boolean indicating the paid status
           schema:
             type: boolean
           required: true
@@ -252,6 +258,7 @@ paths:
       parameters:
         - in: query
           name: startDate
+          description: The start of the date range to show income events for
           schema:
             type: string
             format: date
@@ -259,6 +266,7 @@ paths:
           required: false
         - in: query
           name: endDate
+          description: The end of the date range to show income events for
           schema:
             type: string
             format: date
@@ -284,6 +292,7 @@ paths:
       - BudJet
       - income
       requestBody:
+        description: A NewIncome item to be created
         content:
           application/json:
             schema:
@@ -328,6 +337,7 @@ paths:
       - BudJet
       - income
       requestBody:
+        description: An Income item to be updated
         content:
           application/json:
             schema:
@@ -360,6 +370,7 @@ paths:
       - in: path
         required: true
         name: id
+        description: The ID of the Income object to be targeted
         schema:
           type: string
           format: uuid
@@ -374,20 +385,25 @@ paths:
       - cashflow
       parameters:
         - in: query
-          required: false
-          name: start_date
+          name: startDate
+          description: The start of the date range to show cashflow events for
           schema:
             type: string
             format: date
+            nullable: true
+          required: false
         - in: query
-          required: false
-          name: end_date
+          name: endDate
+          description: The end of the date range to show cashflow events for
           schema:
             type: string
             format: date
+            nullable: true
+          required: false
         - in: query
           required: false
           name: startingBalance
+          description: The starting balance against which cashflow should be calculated
           schema:
             type: number
             format: float
@@ -433,6 +449,7 @@ components:
             $ref: '#/components/schemas/Errors'
   schemas:
     Currency:
+      description: The currency to be used for an item
       type: string
       enum:
         - GBP
@@ -440,6 +457,7 @@ components:
         - EUR
       default: USD
     Period:
+      description: An enumeration of period durations
       type: string
       enum:
         - once
@@ -452,6 +470,7 @@ components:
         - annually
       default: monthly
     Errors:
+      description: An object for holding errors
       type: object
       required:
         - code
@@ -468,6 +487,7 @@ components:
           minimum: 0
     Month:
       type: object
+      description: Describes a single payment status for a given bill for a given month and year
       x-java-class-annotations:
         - '@javax.persistence.Entity'
         - '@javax.persistence.Table(name = "months")'
@@ -479,6 +499,7 @@ components:
       properties:
         id:
           type: string
+          description: A unique identifier for a single payment event
           format: uuid
           x-java-field-annotations:
             - '@javax.persistence.Id'
@@ -492,27 +513,32 @@ components:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "bill_id")'
         year:
+          description: The year part of the payment status record
           type: integer
           format: int32
           minimum: 1900
           maximum: 3000
         month:
+          description: The month part of the payment status record
           type: integer
           format: int32
           minimum: 1
           maximum: 12
           nullable: false
         day:
+          description: The day part of the payment status record
           type: integer
           format: int32
           minimum: 1
           maximum: 31
         paid:
+          description: The payment status for the indicated time
           type: boolean
           default: false
           nullable: false
     NewBill:
       type: object
+      description: A record not requiring a generated unique ID for a new Bill instance to be created
       required:
         - name
         - amount
@@ -521,6 +547,7 @@ components:
       properties:
         id:
           type: string
+          description: A unique identifier for a Bill
           format: uuid
           x-java-field-annotations:
             - '@javax.persistence.Id'
@@ -529,6 +556,7 @@ components:
             - '@javax.persistence.Column(name = "id", updatable = false, nullable = false)'
         name:
           type: string
+          description: The human readable name of this Bill
         amount:
           type: number
           minimum: 0
@@ -537,6 +565,7 @@ components:
         due_date:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "duedate")'
+          description: The day of the month when this bill is due
           type: integer
           format: int32
           minimum: 1
@@ -545,6 +574,7 @@ components:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "latedate")'
           type: integer
+          description: The number of days after the due date when this bill will be considered late and subject to penalties
           format: int32
           minimum: 1
           maximum: 31
@@ -553,20 +583,24 @@ components:
         start_date:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "startdate")'
+          description: The date at which this Bill will start being included in cashflow calculations
           type: string
           format: date
         end_date:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "enddate")'
+          description: The date at which this Bill will no longer be included in cashflow calculations
           type: string
           format: date
         link:
           type: string
+          description: A link to a web site where this bill is paid/managed
           format: uri
         currency:
           $ref: '#/components/schemas/Currency'
     Bill:
       type: object
+      description: A Bill object with a required unique identifier that has been persisted
       x-java-class-annotations:
         - '@javax.persistence.Entity'
         - '@javax.persistence.Table(name = "bills")'
@@ -632,6 +666,7 @@ components:
         - type: object
           properties:
             months:
+              description: The payment status of associated billing events
               type: array
               minItems: 10
               maxItems: 10
@@ -643,21 +678,26 @@ components:
                 $ref: '#/components/schemas/Month'
     User:
       type: object
+      description: An object representing a user of this system
       properties:
         email:
           type: string
           format: email
+          description: The unique e-mail address of this user
         name:
           type: string
+          description: The full name of the user represented
       additionalProperties: true
     NewIncome:
       type: object
+      description: An object representing a newly created Income instance which has not yet been persisted and thus it does not have a unique ID required
       required:
       - name
       - amount
       properties:
         id:
           type: string
+          description: The unique ID which gets assigned upon being persisted
           format: uuid
           x-java-field-annotations:
             - '@javax.persistence.Id'
@@ -666,8 +706,10 @@ components:
             - '@javax.persistence.Column(name = "id", updatable = false, nullable = false)'
         name:
           type: string
+          description: The human readable name of this Income source
         amount:
           type: number
+          description: The approximate amount of the income
           multipleOf: 0.01
           minimum: 0.00
         period:
@@ -676,16 +718,19 @@ components:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "startdate")'
           type: string
+          description: The date on which this Income source starts being included in cashflow calculations
           format: date
         end_date:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "enddate")'
           type: string
+          description: The date on which this Income source stops being included in cashflow calculations
           format: date
         currency:
           $ref: '#/components/schemas/Currency'
     Income:
       type: object
+      description: An Income object with a required unique identifier that has been persisted
       x-java-class-annotations:
         - '@javax.persistence.Entity'
         - '@javax.persistence.Table(name = "income")'
@@ -725,6 +770,7 @@ components:
         - $ref: '#/components/schemas/NewIncome'
     DailyBalance:
       type: object
+      description: When the Cashflow is requested, an array of these objects represent the net increase/descrease of available cash for a given day
       required:
       - date
       - balance
@@ -732,16 +778,20 @@ components:
         date:
           type: string
           format: date
+          description: The date for this balance value
         balance:
           type: number
           multipleOf: 0.01
+          description: The computed balance based on starting balance, income, and bills due
         currency:
           $ref: '#/components/schemas/Currency'
         income:
           type: array
+          description: A list of the Income items which apply on this date
           items:
             $ref: '#/components/schemas/Income'
         expenditures:
           type: array
+          description: A list of the Bill items which apply on this date
           items:
             $ref: '#/components/schemas/Bill'
