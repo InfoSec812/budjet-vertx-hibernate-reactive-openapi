@@ -5,6 +5,7 @@ import com.zanclus.api.services.*;
 import io.smallrye.mutiny.vertx.core.AbstractVerticle;
 import io.smallrye.mutiny.Uni;
 import io.vertx.ext.web.api.service.RouteToEBServiceHandler;
+import io.vertx.mutiny.core.http.HttpServer;
 import io.vertx.mutiny.ext.web.Router;
 import io.vertx.mutiny.ext.web.openapi.RouterBuilder;
 import io.vertx.serviceproxy.ServiceBinder;
@@ -60,6 +61,10 @@ public class MainVerticle extends AbstractVerticle {
         return routerBuilder.createRouter();
     }
     
+    Uni<HttpServer> createServer(Router router) {
+        return vertx.createHttpServer().requestHandler(router).listen(8080);
+    }
+    
     @Override
     public Uni<Void> asyncStart() {
         vertx.eventBus().getDelegate().registerDefaultCodec(LocalDate.class, new LocalDateCodec());
@@ -69,6 +74,7 @@ public class MainVerticle extends AbstractVerticle {
         return vertx.executeBlocking(startHibernate)
                     .flatMap(this::initOpenAPI)
                     .map(this::mapRoutes)
+                    .flatMap(this::createServer)
                     .replaceWithVoid();
     }
 }
