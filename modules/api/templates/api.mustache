@@ -20,6 +20,13 @@ import java.util.Map;
 public interface {{classname}}  {
 {{#operations}}
 {{#operation}}
+    /**
+     * {{summary}}
+     * {{#allParams}}
+     * @param {{paramName}} {{description}} {{/allParams}}
+     * @param ctx The {@link ServiceRequest} which has the data from the request
+     * @param handler The {@link Handler} for sending the response using a {@link ServiceResponse}
+     */
     default void {{operationId}}({{#allParams}}{{#isPrimitiveType}}{{#isDate}}String{{/isDate}}{{^isDate}}{{{dataType}}}{{/isDate}}{{/isPrimitiveType}}{{^isPrimitiveType}}JsonObject{{/isPrimitiveType}} {{paramName}}, {{/allParams}}ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
         handler.handle(Future.failedFuture(new Exception("Not yet implemented")));
     }
