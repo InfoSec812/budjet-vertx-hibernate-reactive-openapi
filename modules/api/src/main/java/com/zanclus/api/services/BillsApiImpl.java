@@ -83,4 +83,14 @@ public class BillsApiImpl extends AbstractService implements BillsApi {
             handleBadRequest(handler);
         }
     }
+    
+    @Override
+    public void getBill(String id, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
+        UniHelper.toFuture(sessionFactory.withSession(
+                        session -> session.find(Bill.class, UUID.fromString(id))
+                    )
+                .map(this::mapEntityToServiceResponse)
+                .onFailure().recoverWithItem(this::mapThrowableToServiceResponse))
+            .onComplete(handler);
+    }
 }
