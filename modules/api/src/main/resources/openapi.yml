@@ -774,6 +774,7 @@ components:
       required:
       - date
       - balance
+      - currency
       properties:
         date:
           type: string
