@@ -36,6 +36,7 @@ paths:
   /user/current:
     get:
       description: Get the currently logged in user
+      summary: Get the currently logged in user
       operationId: getCurrentUser
       x-vertx-event-bus: budget.system
       tags:
@@ -53,6 +54,7 @@ paths:
       operationId: getAllBills
       x-vertx-event-bus: budjet.bills
       description: Retrieve an array of all Bills ordered by next due date
+      summary: Retrieve an array of all Bills ordered by next due date
       # security:
       #   - Keycloak: ['view', 'edit', 'admin']
       tags:
@@ -73,6 +75,7 @@ paths:
       parameters:
         - in: query
           name: startDate
+          description: The starting date from which to show bills which are coming due
           schema:
             type: string
             format: date
@@ -80,6 +83,7 @@ paths:
           required: false
         - in: query
           name: endDate
+          description: The end of the period for which to retrieve bills coming due
           schema:
             type: string
             format: date
@@ -89,12 +93,14 @@ paths:
       operationId: addBill
       x-vertx-event-bus: budjet.bills
       description: Adds a new bill item to the system
+      summary: Adds a new bill item to the system
       # security:
       #   - Keycloak: ['edit', 'admin']
       tags:
       - BudJet
       - bills
       requestBody:
+        description: A NewBill instance to be created
         content:
           application/json:
             schema:
@@ -113,6 +119,7 @@ paths:
       operationId: getDueBills
       x-vertx-event-bus: budjet.bills
       description: Returns Bills along with Month information for due dates
+      summary: Returns Bills along with Month information for due dates
       tags:
       - BudJet
       - bills
@@ -130,6 +137,7 @@ paths:
       operationId: getBill
       x-vertx-event-bus: budjet.bills
       description: Retrieve the Bill specified by the ID
+      summary: Retrieve the Bill specified by the ID
       # security:
       #   - Keycloak: ['view', 'edit', 'admin']
       tags:
@@ -148,6 +156,7 @@ paths:
       operationId: updateBill
       x-vertx-event-bus: budjet.bills
       description: Updates the details about a bill item in the system
+      summary: Updates the details about a bill item in the system
       # security:
       #   - Keycloak: ['edit', 'admin']
       tags:
@@ -171,6 +180,7 @@ paths:
       operationId: deleteBill
       x-vertx-event-bus: budjet.bills
       description: Delete the Bill specified by the ID
+      summary: Delete the Bill specified by the ID
       # security:
       #   - Keycloak: ['edit', 'admin']
       tags:
@@ -191,6 +201,7 @@ paths:
   /bill/{id}/{year}/{month}:
     put:
       description: Update the paid status for a given month/year for a given bill ID
+      summary: Update the paid status for a given month/year for a given bill ID
       operationId: updatePaidStatus
       x-vertx-event-bus: budjet.bills
       # security:
@@ -234,6 +245,7 @@ paths:
       operationId: getIncomeSources
       x-vertx-event-bus: budjet.income
       description: Retrieve a list of income sources
+      summary: Retrieve a list of income sources
       tags:
       - BudJet
       - income
@@ -267,6 +279,7 @@ paths:
       operationId: addIncomeSource
       x-vertx-event-bus: budjet.income
       description: Adds a new income source using the properties of the request body
+      summary: Adds a new income source using the properties of the request body
       tags:
       - BudJet
       - income
@@ -289,6 +302,7 @@ paths:
       operationId: getIncome
       x-vertx-event-bus: budjet.income
       description: Retrieve the Income specified by the ID
+      summary: Retrieve the Income specified by the ID
       # security:
       #   - Keycloak: ['view', 'edit', 'admin']
       tags:
@@ -307,6 +321,7 @@ paths:
       operationId: updateIncome
       x-vertx-event-bus: budjet.income
       description: Updates the details about a income item in the system
+      summary: Updates the details about a income item in the system
       # security:
       #   - Keycloak: ['edit', 'admin']
       tags:
@@ -330,6 +345,7 @@ paths:
       operationId: deleteIncome
       x-vertx-event-bus: budjet.income
       description: Delete the Income specified by the ID
+      summary: Delete the Income specified by the ID
       # security:
       #   - Keycloak: ['edit', 'admin']
       tags:
@@ -352,6 +368,7 @@ paths:
       operationId: getCashFlow
       x-vertx-event-bus: budjet.income
       description: Get the cashflow information for the next few weeks given a starting balance
+      summary: Get the cashflow information for the next few weeks given a starting balance
       tags:
       - BudJet
       - cashflow
@@ -390,6 +407,8 @@ paths:
         
   /health:
     get:
+      description: Check the health of the API Server
+      summary: Check the health of the API Server
       operationId: checkHealth
       x-vertx-event-bus: budjet.system
       tags:
