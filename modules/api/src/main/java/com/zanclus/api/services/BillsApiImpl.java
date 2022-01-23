@@ -7,6 +7,7 @@ import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
@@ -19,10 +20,16 @@ import java.util.UUID;
 
 public class BillsApiImpl extends AbstractService implements BillsApi {
 
+    final Vertx vertx;
+    
     Mutiny.SessionFactory sessionFactory;
 
-    public BillsApiImpl(Mutiny.SessionFactory sessionFactory) {
+    public void setSessionFactory(Mutiny.SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
+    }
+    
+    public BillsApiImpl(Vertx vertx) {
+        this.vertx = vertx;
     }
 
     @Override

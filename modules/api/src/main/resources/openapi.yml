@@ -516,11 +516,15 @@ components:
           maximum: 3000
           multipleOf: 0.01
         due_date:
+          x-java-field-annotations:
+            - '@javax.persistence.Column(name = "duedate")'
           type: integer
           format: int32
           minimum: 1
           maximum: 31
         late_date:
+          x-java-field-annotations:
+            - '@javax.persistence.Column(name = "latedate")'
           type: integer
           format: int32
           minimum: 1
@@ -528,9 +532,13 @@ components:
         periodicity:
           $ref: '#/components/schemas/Period'
         start_date:
+          x-java-field-annotations:
+            - '@javax.persistence.Column(name = "startdate")'
           type: string
           format: date
         end_date:
+          x-java-field-annotations:
+            - '@javax.persistence.Column(name = "enddate")'
           type: string
           format: date
         link:
@@ -549,38 +557,38 @@ components:
               resultClass = Bill.class,
               query = """
                 WITH days_in_period AS (
-                  SELECT generate_series(?, ?, '1 day'::interval)::date as date
+                    SELECT CAST(generate_series(CAST(? AS date), CAST(? AS date), CAST('1 day' AS interval)) AS date) as date
                 ),
-                dates AS (
-                  SELECT
-                    EXTRACT(ISODOW FROM d.date) AS dow,
-                    EXTRACT(DAY FROM d.date) AS dom,
-                    EXTRACT(WEEK FROM d.date) AS week,
-                    EXTRACT(MONTH FROM d.date) AS month,
-                    EXTRACT(YEAR FROM d.date) AS year,
-                    d.date
-                  FROM days_in_period d
-                )
+                     dates AS (
+                         SELECT
+                             EXTRACT(ISODOW FROM d.date) AS dow,
+                             EXTRACT(DAY FROM d.date) AS dom,
+                             EXTRACT(WEEK FROM d.date) AS week,
+                             EXTRACT(MONTH FROM d.date) AS month,
+                             EXTRACT(YEAR FROM d.date) AS year,
+                             d.date
+                         FROM days_in_period d
+                     )
                 SELECT
-                  b.*,
-                  m.*
+                    b.*,
+                    m.*
                 FROM dates d
-                INNER JOIN bills b ON
-                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                  (b.startdate = d.date AND b.period = 0)
-                LEFT JOIN 
-                  months m
-                ON
-                  m.bill_id = b.id AND
-                  m.day = d.dom AND
-                  m.month = d.month AND
-                  m.year = d.year
-                ORDER BY d.date ASC;
+                         INNER JOIN bills b ON
+                        ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                        ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                        ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                        (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                        (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                        (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                        (b.startdate = d.date AND b.period = 0)
+                         LEFT JOIN
+                     months m
+                     ON
+                                 m.bill_id = b.id AND
+                                 m.day = d.dom AND
+                                 m.month = d.month AND
+                                 m.year = d.year
+                ORDER BY d.date ASC
               """
             )
       required:
@@ -598,7 +606,7 @@ components:
               minItems: 10
               maxItems: 10
               x-java-field-annotations:
-                - '@javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)'
+                - '@javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true, fetch = javax.persistence.FetchType.EAGER)'
                 - '@javax.persistence.JoinColumn(name = "bill_id")'
                 - '@javax.persistence.OrderBy("year,month,day")'
               items:
@@ -635,9 +643,13 @@ components:
         period:
           $ref: '#/components/schemas/Period'
         start_date:
+          x-java-field-annotations:
+            - '@javax.persistence.Column(name = "startdate")'
           type: string
           format: date
         end_date:
+          x-java-field-annotations:
+            - '@javax.persistence.Column(name = "enddate")'
           type: string
           format: date
         currency:

@@ -4,6 +4,7 @@ package {{package}};
 {{/imports}}
 
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import io.vertx.ext.web.api.service.WebApiServiceGen;
@@ -24,4 +25,8 @@ public interface {{classname}}  {
     }
 {{/operation}}
 {{/operations}}
+
+  static {{classname}} create(Vertx vertx) {
+    return new {{classname}}Impl(vertx);
+  }
 }

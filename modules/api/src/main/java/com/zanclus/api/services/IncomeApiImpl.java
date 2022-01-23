@@ -3,13 +3,12 @@ package com.zanclus.api.services;
 import com.zanclus.models.Bill;
 import com.zanclus.models.Income;
 import com.zanclus.models.NewIncome;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.tuples.Functions;
 import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
@@ -21,11 +20,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class IncomeApiImpl extends AbstractService implements IncomeApi {
-
+    
+    final Vertx vertx;
+    
     Mutiny.SessionFactory sessionFactory;
-
-    public IncomeApiImpl(Mutiny.SessionFactory sessionFactory) {
+    
+    public void setSessionFactory(Mutiny.SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
+    }
+    
+    public IncomeApiImpl(Vertx vertx) {
+        this.vertx = vertx;
     }
 
     @Override
