@@ -554,41 +554,52 @@ components:
         - >-
             @javax.persistence.NamedNativeQuery(
               name = "getBillsForPeriod",
-              resultClass = Bill.class,
               query = """
                 WITH days_in_period AS (
                     SELECT CAST(generate_series(CAST(? AS date), CAST(? AS date), CAST('1 day' AS interval)) AS date) as date
                 ),
-                     dates AS (
-                         SELECT
-                             EXTRACT(ISODOW FROM d.date) AS dow,
-                             EXTRACT(DAY FROM d.date) AS dom,
-                             EXTRACT(WEEK FROM d.date) AS week,
-                             EXTRACT(MONTH FROM d.date) AS month,
-                             EXTRACT(YEAR FROM d.date) AS year,
-                             d.date
-                         FROM days_in_period d
-                     )
-                SELECT
-                    b.*,
-                    m.*
-                FROM dates d
-                         INNER JOIN bills b ON
-                        ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                        ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                        ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                        (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                        (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                        (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
-                        (b.startdate = d.date AND b.period = 0)
-                         LEFT JOIN
-                     months m
-                     ON
-                                 m.bill_id = b.id AND
-                                 m.day = d.dom AND
-                                 m.month = d.month AND
-                                 m.year = d.year
-                ORDER BY d.date ASC
+                 dates AS (
+                     SELECT
+                         EXTRACT(ISODOW FROM d.date) AS dow,
+                         EXTRACT(DAY FROM d.date) AS dom,
+                         EXTRACT(WEEK FROM d.date) AS week,
+                         EXTRACT(MONTH FROM d.date) AS month,
+                         EXTRACT(YEAR FROM d.date) AS year,
+                         d.date
+                     FROM days_in_period d
+                ),
+                bills_with_months AS (
+                    SELECT
+                        b.*,
+                        array_agg(
+                            json_build_object(
+                                'id', m.id,
+                                'bill_id', COALESCE(m.bill_id, b.id),
+                                'day', COALESCE(m.day, d.dom),
+                                'month', coalesce(m.month, d.month),
+                                'year', coalesce(m.year, d.year),
+                                'paid', coalesce(m.paid, false)
+                            )
+                        ) AS months
+                    FROM dates d
+                             INNER JOIN bills b ON
+                            ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                            ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 6 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 6 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                            ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 3 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 5 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                            (EXTRACT(DAY FROM b.startdate) = d.dom AND b.period = 4 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                            (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                            (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
+                            (b.startdate = d.date AND b.period = 0)
+                    LEFT JOIN
+                         months m
+                    ON
+                         m.bill_id = b.id AND
+                         m.day = d.dom AND
+                         m.month = d.month AND
+                         m.year = d.year
+                    GROUP BY b.id, m.bill_id
+                )
+                SELECT CAST(to_json(bwm) as text) as bill FROM bills_with_months bwm
               """
             )
       required:
@@ -665,7 +676,7 @@ components:
               resultClass = Income.class,
               query = """
               WITH days_in_period AS (
-                  SELECT generate_series(?, ?, '1 day'::interval)::date as date
+                  SELECT CAST(generate_series(CAST(? AS date), CAST(? AS date), CAST('1 day' AS interval)) AS date) as date
               ),
                    dates AS (
                        SELECT

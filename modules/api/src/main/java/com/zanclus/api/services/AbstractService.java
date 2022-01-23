@@ -16,15 +16,20 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 public abstract class AbstractService {
-
+    
     ServiceResponse mapListToServiceResponse(List<? extends Serializable> a) {
         List<JsonObject> results = a.stream().map(JsonObject::mapFrom).toList();
         return ServiceResponse.completedWithJson(new JsonArray(results));
     }
-
+    
+    ServiceResponse mapJsonListToServiceResponse(List<JsonObject> a) {
+        return ServiceResponse.completedWithJson(new JsonArray(a));
+    }
+    
     ServiceResponse mapEntityToServiceResponse(Serializable b) {
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(b));
     }

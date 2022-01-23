@@ -12,13 +12,18 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import org.hibernate.reactive.mutiny.Mutiny;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.NoResultException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 
 public class BillsApiImpl extends AbstractService implements BillsApi {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(BillsApiImpl.class);
 
     final Vertx vertx;
     
@@ -63,11 +68,18 @@ public class BillsApiImpl extends AbstractService implements BillsApi {
         Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun =
             (LocalDate start, LocalDate end, Handler<AsyncResult<ServiceResponse>> hdlr) ->
                   UniHelper.toFuture(sessionFactory
-                    .withSession(session -> session.createNamedQuery("getBillsForPeriod", Bill.class)
+                    .withSession(session -> session.createNamedQuery("getBillsForPeriod")
                             .setParameter(1, start).setParameter(2, end).getResultList())
-                    .map(this::mapListToServiceResponse).onFailure()
+                                         .map(this::mapRawObjectToJsonObject)
+                    .map(this::mapJsonListToServiceResponse).onFailure()
                     .recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
         checkDates(parsedStartDate, parsedEndDate, fun, handler);
+    }
+    
+    private List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
+        return objects.stream()
+                        .map(o -> new JsonObject((String)o))
+                        .toList();
     }
     
     @Override
