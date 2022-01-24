@@ -249,7 +249,7 @@
         <configuration>
           <redeploy>true</redeploy>
           <verticle>com.zanclus.api.MainVerticle</verticle>
-          <launcher>com.zanclus.Launcher</launcher>
+          <launcher>com.zanclus.BudjetLauncher</launcher>
         </configuration>
       </plugin>
       <plugin>
