@@ -1,11 +1,12 @@
 package com.zanclus.api.services;
 
 import com.zanclus.models.Errors;
+import com.zanclus.models.User;
 import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -30,7 +31,7 @@ public class SystemApiImpl implements SystemApi, ServiceInterface {
         healthStatus.setCode(500);
         healthStatus.setMsg("Not ready");
         UniHelper.toFuture(sessionFactory.withSession(
-                    session -> session.createNativeQuery("SELECT 1").getResultList())
+                    session -> session.createNativeQuery("SELECT 1").getSingleResult())
                .map(o -> {
                    healthStatus.setCode(200);
                    healthStatus.setMsg("Ready");
@@ -43,6 +44,11 @@ public class SystemApiImpl implements SystemApi, ServiceInterface {
 
     @Override
     public void getCurrentUser(ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
-
+      var staticUser = new User()
+                                    .email("me@example.com")
+                                    .name("John Doe");
+      var currentUserInfo = ServiceResponse.completedWithJson(staticUser.toJson());
+      var serviceResponseFuture = Future.succeededFuture(currentUserInfo);
+      handler.handle(serviceResponseFuture);
     }
 }
