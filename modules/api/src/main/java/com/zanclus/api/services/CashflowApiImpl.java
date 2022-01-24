@@ -11,16 +11,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import org.hibernate.reactive.mutiny.Mutiny;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class CashflowApiImpl implements CashflowApi, ServiceInterface {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(CashflowApiImpl.class);
     
     final Vertx vertx;
     
@@ -37,8 +32,6 @@ public class CashflowApiImpl implements CashflowApi, ServiceInterface {
     @Override
     public void getCashFlow(String startDate, String endDate, Float startingBalance, ServiceRequest ctx,
             Handler<AsyncResult<ServiceResponse>> handler) {
-        var parsedStartDate = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
-        var parsedEndDate = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
     
         Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun =
             (LocalDate start, LocalDate end, Handler<AsyncResult<ServiceResponse>> hdlr) ->
@@ -56,7 +49,7 @@ public class CashflowApiImpl implements CashflowApi, ServiceInterface {
                         .map(this::mapListToServiceResponse)
                         .onFailure().recoverWithItem(this::mapThrowableToServiceResponse))
                     .onComplete(handler);
-        checkDates(parsedStartDate, parsedEndDate, fun, handler);
+        checkDates(startDate, endDate, fun, handler);
     }
     
     private List<DailyBalance> mapJsonObjectsToDailyBalance(List<JsonObject> jsonObjects) {
