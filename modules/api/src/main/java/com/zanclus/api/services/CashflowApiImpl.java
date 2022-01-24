@@ -14,12 +14,11 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-public class CashflowApiImpl extends AbstractService implements CashflowApi {
+public class CashflowApiImpl implements CashflowApi, ServiceInterface {
     
     private static final Logger LOG = LoggerFactory.getLogger(CashflowApiImpl.class);
     

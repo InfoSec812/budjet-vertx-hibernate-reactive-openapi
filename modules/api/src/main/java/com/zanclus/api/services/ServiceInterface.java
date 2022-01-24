@@ -14,57 +14,51 @@ import io.vertx.ext.web.api.service.ServiceResponse;
 import javax.persistence.NoResultException;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.List;
 
-public abstract class AbstractService {
+public interface ServiceInterface {
     
-    ServiceResponse mapListToServiceResponse(List<? extends Serializable> a) {
+    default ServiceResponse mapListToServiceResponse(List<? extends Serializable> a) {
         List<JsonObject> results = a.stream().map(JsonObject::mapFrom).toList();
         return ServiceResponse.completedWithJson(new JsonArray(results));
     }
     
-    ServiceResponse mapJsonListToServiceResponse(List<JsonObject> a) {
-        return ServiceResponse.completedWithJson(new JsonArray(a));
-    }
-    
-    ServiceResponse mapEntityToServiceResponse(Serializable b) {
+    default ServiceResponse mapEntityToServiceResponse(Serializable b) {
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(b));
     }
-
-    ServiceResponse mapThrowableToServiceResponse(Throwable t) {
+    
+    default ServiceResponse mapThrowableToServiceResponse(Throwable t) {
         Errors err = new Errors();
         err.setMsg(t.getLocalizedMessage());
         err.setCode(500);
         err.setTimestamp(OffsetDateTime.now());
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
     }
-
-    ServiceResponse mapNoResultToNotFound(Throwable e) {
+    
+    default ServiceResponse mapNoResultToNotFound(Throwable e) {
         var err = new Errors().code(404).msg("Not found").timestamp(OffsetDateTime.now());
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
     }
     
-    List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
+    default List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
         return objects.stream()
             .map(o -> new JsonObject((String)o))
             .toList();
     }
-
-    Uni<? extends Serializable> mapNullToNotFound(Serializable e) {
+    
+    default Uni<? extends Serializable> mapNullToNotFound(Serializable e) {
         if (e == null) {
             return Uni.createFrom().failure(new NoResultException());
         }
         return Uni.createFrom().item(e);
     }
-
-    ServiceResponse mapToNoContentResponse(Void v) {
+    
+    default ServiceResponse mapToNoContentResponse(Void v) {
         return new ServiceResponse().setStatusCode(204).setStatusMessage("NO CONTENT");
     }
     
-    void checkDates(LocalDate startDate, LocalDate endDate, Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun, Handler<AsyncResult<ServiceResponse>> handler) {
+    default void checkDates(LocalDate startDate, LocalDate endDate, Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun, Handler<AsyncResult<ServiceResponse>> handler) {
         final var now = LocalDate.now();
         
         if (startDate == null) {
@@ -82,7 +76,7 @@ public abstract class AbstractService {
         }
     }
     
-    void handleBadRequest(Handler<AsyncResult<ServiceResponse>> handler) {
+    default void handleBadRequest(Handler<AsyncResult<ServiceResponse>> handler) {
         ServiceResponse badRequest = new ServiceResponse();
         badRequest.setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase());
         badRequest.setStatusCode(HttpResponseStatus.BAD_REQUEST.code());

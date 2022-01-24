@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-public class IncomeApiImpl extends AbstractService implements IncomeApi {
+public class IncomeApiImpl implements IncomeApi, ServiceInterface {
     
     final Vertx vertx;
     

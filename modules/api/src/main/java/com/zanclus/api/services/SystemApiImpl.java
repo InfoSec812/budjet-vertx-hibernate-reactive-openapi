@@ -7,7 +7,7 @@ import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-public class SystemApiImpl implements SystemApi {
+public class SystemApiImpl implements SystemApi, ServiceInterface {
     
     final Vertx vertx;
     

@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
-public class BillsApiImpl extends AbstractService implements BillsApi {
+public class BillsApiImpl implements BillsApi, ServiceInterface {
     
     private static final Logger LOG = LoggerFactory.getLogger(BillsApiImpl.class);
 
@@ -69,11 +69,19 @@ public class BillsApiImpl extends AbstractService implements BillsApi {
             (LocalDate start, LocalDate end, Handler<AsyncResult<ServiceResponse>> hdlr) ->
                   UniHelper.toFuture(sessionFactory
                     .withSession(session -> session.createNamedQuery("getBillsForPeriod")
-                            .setParameter(1, start).setParameter(2, end).getResultList())
-                                         .map(this::mapRawObjectToJsonObject)
-                    .map(this::mapJsonListToServiceResponse).onFailure()
+                                .setParameter(1, start).setParameter(2, end).getResultList())
+                                .map(this::mapRawObjectToJsonObject)
+                                .map(this::mapJsonObjectToBill)
+                                .map(this::mapListToServiceResponse)
+                      .onFailure()
                     .recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
         checkDates(parsedStartDate, parsedEndDate, fun, handler);
+    }
+    
+    private List<Bill> mapJsonObjectToBill(List<JsonObject> jsonObjects) {
+        return jsonObjects.stream()
+                   .map(j -> j.mapTo(Bill.class))
+                   .toList();
     }
     
     @Override
