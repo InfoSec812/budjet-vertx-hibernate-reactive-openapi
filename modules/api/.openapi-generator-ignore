@@ -4,3 +4,4 @@ pom.xml
 **/HttpServerVerticle.java
 README.md
 **/openapi.yaml
+**/ApiResponse.java
