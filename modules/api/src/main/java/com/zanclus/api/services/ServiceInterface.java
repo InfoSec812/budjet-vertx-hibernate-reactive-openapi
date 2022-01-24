@@ -15,6 +15,7 @@ import javax.persistence.NoResultException;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public interface ServiceInterface {
@@ -47,7 +48,7 @@ public interface ServiceInterface {
             .toList();
     }
     
-    default Uni<? extends Serializable> mapNullToNotFound(Serializable e) {
+    default Uni<Serializable> mapNullToNotFound(Serializable e) {
         if (e == null) {
             return Uni.createFrom().failure(new NoResultException());
         }
@@ -58,21 +59,35 @@ public interface ServiceInterface {
         return new ServiceResponse().setStatusCode(204).setStatusMessage("NO CONTENT");
     }
     
-    default void checkDates(LocalDate startDate, LocalDate endDate, Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun, Handler<AsyncResult<ServiceResponse>> handler) {
+    default void checkDates(String startDate, String endDate, Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun, Handler<AsyncResult<ServiceResponse>> handler) {
         final var now = LocalDate.now();
+        LocalDate parsedStartDate;
+        LocalDate parsedEndDate;
         
         if (startDate == null) {
-            startDate = now.minusDays(now.getDayOfMonth() - 1L);
+            parsedStartDate = now.minusDays(now.getDayOfMonth() - 1L);
+        } else {
+            try {
+                parsedStartDate = LocalDate.parse(startDate);
+            } catch(DateTimeParseException e) {
+                parsedStartDate = now.minusDays(now.getDayOfMonth() - 1L);
+            }
         }
         
         if (endDate == null) {
-            endDate = now.plusMonths(3);
+            parsedEndDate = now.plusMonths(3);
+        } else {
+            try {
+                parsedEndDate = LocalDate.parse(endDate);
+            } catch(DateTimeParseException e) {
+                parsedEndDate = now.plusMonths(3);
+            }
         }
         
-        if (endDate.isBefore(startDate)) {
+        if (parsedEndDate.isBefore(parsedStartDate)) {
             handleBadRequest(handler);
         } else {
-            fun.apply(startDate, endDate, handler);
+            fun.apply(parsedStartDate, parsedEndDate, handler);
         }
     }
     
