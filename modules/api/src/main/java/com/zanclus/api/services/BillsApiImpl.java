@@ -1,7 +1,6 @@
 package com.zanclus.api.services;
 
 import com.zanclus.models.Bill;
-import com.zanclus.models.NewBill;
 import io.smallrye.mutiny.tuples.Functions;
 import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.persistence.NoResultException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,12 +36,12 @@ public class BillsApiImpl implements BillsApi, ServiceInterface {
     }
 
     @Override
-    public void addBill(JsonObject newBill, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
-        var parsedNewBill = newBill.mapTo(NewBill.class);
-        UniHelper.toFuture(sessionFactory.withSession(session -> session.persist(parsedNewBill))
+    public void addBill(JsonObject body, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
+        LOG.info("JSON Body: {}", body);
+        var parsedNewBill = body.mapTo(Bill.class);
+        UniHelper.toFuture(sessionFactory.withTransaction((session, tx) -> session.merge(parsedNewBill))
                 .replaceWith(() -> parsedNewBill)
                 .map(this::mapEntityToServiceResponse)
-                .map(sr -> sr.setStatusCode(200).setStatusMessage("OK"))
                 .onFailure().recoverWithItem(this::mapThrowableToServiceResponse))
             .onComplete(handler);
     }
@@ -63,8 +61,7 @@ public class BillsApiImpl implements BillsApi, ServiceInterface {
     @Override
     public void getAllBills(String startDate, String endDate, ServiceRequest ctx,
             Handler<AsyncResult<ServiceResponse>> handler) {
-        var parsedStartDate = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
-        var parsedEndDate = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
+        LOG.info("Made it to the implementation");
         Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun =
             (LocalDate start, LocalDate end, Handler<AsyncResult<ServiceResponse>> hdlr) ->
                   UniHelper.toFuture(sessionFactory
@@ -75,7 +72,8 @@ public class BillsApiImpl implements BillsApi, ServiceInterface {
                                 .map(this::mapListToServiceResponse)
                       .onFailure()
                     .recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
-        checkDates(parsedStartDate, parsedEndDate, fun, handler);
+        LOG.info("Successfully defined the lambda");
+        checkDates(startDate, endDate, fun, handler);
     }
     
     private List<Bill> mapJsonObjectToBill(List<JsonObject> jsonObjects) {
@@ -85,11 +83,11 @@ public class BillsApiImpl implements BillsApi, ServiceInterface {
     }
     
     @Override
-    public void updateBill(String id, JsonObject bill, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
-        var parsedBill = bill.mapTo(Bill.class);
+    public void updateBill(String id, JsonObject body, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
+        var parsedBill = body.mapTo(Bill.class);
         if (parsedBill.getId().toString().contentEquals(id)) {
-            UniHelper.toFuture(sessionFactory.withSession(
-                    session -> session.merge(parsedBill)
+            UniHelper.toFuture(sessionFactory.withTransaction(
+                    (session, tx) -> session.merge(parsedBill)
                 )
                 .map(this::mapEntityToServiceResponse)
                 .onFailure().recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
