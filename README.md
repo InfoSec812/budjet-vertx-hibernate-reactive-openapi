@@ -10,7 +10,7 @@ Most generated code will be placed under it's associated module in the `src/gen/
 ## Overview
 
 The purpose of this project is to demonstrate how you could create a Contract-First API
-for [Vert.x](https://vertx.io) using [OpenAPI Generator](https://openapi-generator.tech) and [Hibernate Reactive](http://hibernate.org/reactive/)
+with [Vert.x](https://vertx.io) using [OpenAPI Generator](https://openapi-generator.tech) and [Hibernate Reactive](http://hibernate.org/reactive/). This API is designed to be the backend-for-frontend which complements this [VueJS UI](https://github.com/InfoSec812/budjet)
 
 ## Build Application
 
