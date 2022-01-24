@@ -1,7 +1,6 @@
 package com.zanclus.api.services;
 
 import com.zanclus.models.Errors;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.tuples.Functions;
 import io.vertx.core.AsyncResult;
@@ -17,6 +16,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+
+import static io.netty.handler.codec.http.HttpResponseStatus.*;
 
 public interface ServiceInterface {
     
@@ -34,12 +35,23 @@ public interface ServiceInterface {
         err.setMsg(t.getLocalizedMessage());
         err.setCode(500);
         err.setTimestamp(OffsetDateTime.now());
-        return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
+        return ServiceResponse
+                   .completedWithJson(JsonObject.mapFrom(err))
+                   .setStatusMessage(INTERNAL_SERVER_ERROR.reasonPhrase())
+                   .setStatusCode(INTERNAL_SERVER_ERROR.code());
     }
     
     default ServiceResponse mapNoResultToNotFound(Throwable e) {
-        var err = new Errors().code(404).msg("Not found").timestamp(OffsetDateTime.now());
-        return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
+        var err = new Errors();
+        err
+            .code(404)
+            .msg("Not found")
+            .timestamp(OffsetDateTime.now())
+            .put("exceptionMessage", e.getLocalizedMessage());
+        return ServiceResponse
+                    .completedWithJson(err.toJson())
+                    .setStatusCode(NOT_FOUND.code())
+                    .setStatusMessage(NOT_FOUND.reasonPhrase());
     }
     
     default List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
@@ -55,7 +67,7 @@ public interface ServiceInterface {
         return Uni.createFrom().item(e);
     }
     
-    default ServiceResponse mapToNoContentResponse(Void v) {
+    default ServiceResponse mapToNoContentResponse(Void ignoredV) {
         return new ServiceResponse().setStatusCode(204).setStatusMessage("NO CONTENT");
     }
     
@@ -92,13 +104,13 @@ public interface ServiceInterface {
     }
     
     default void handleBadRequest(Handler<AsyncResult<ServiceResponse>> handler) {
-        ServiceResponse badRequest = new ServiceResponse();
-        badRequest.setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase());
-        badRequest.setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
         JsonObject errBody = new JsonObject();
         errBody.put("message", "ID from path param MUST match ID in submitted object.");
         errBody.put("code", 400);
-        badRequest.setPayload(errBody.toBuffer());
+        var badRequest = ServiceResponse
+            .completedWithJson(errBody)
+            .setStatusMessage(BAD_REQUEST.reasonPhrase())
+            .setStatusCode(BAD_REQUEST.code());
         handler.handle(Future.succeededFuture(badRequest));
     }
 }
