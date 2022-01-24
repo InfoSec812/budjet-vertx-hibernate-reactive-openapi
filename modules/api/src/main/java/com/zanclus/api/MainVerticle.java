@@ -10,8 +10,7 @@ import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.mutiny.core.http.HttpServer;
 import io.vertx.mutiny.ext.web.Router;
-import io.vertx.mutiny.ext.web.RoutingContext;
-import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.mutiny.ext.web.handler.CorsHandler;
 import io.vertx.mutiny.ext.web.openapi.RouterBuilder;
 import io.vertx.serviceproxy.ServiceBinder;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -89,24 +88,11 @@ public class MainVerticle extends AbstractVerticle {
      */
     Uni<HttpServer> createServer(Router router) {
         Router parentRouter = Router.router(vertx);
-        parentRouter.route().handler(BodyHandler.create());
-        parentRouter.route().handler(this::logAllRequests);
-        parentRouter.mountSubRouter("/api/v1", router);
+        parentRouter.route().handler(CorsHandler.create("*"));
+        parentRouter.mountSubRouter("/", router);
     
         LOG.info("HTTP Server Created");
-        return vertx.createHttpServer().requestHandler(parentRouter).listen(8080);
-    }
-    
-    /**
-     * Log information about all requests
-     * @param ctx The {@link RoutingContext} of each request
-     */
-    private void logAllRequests(RoutingContext ctx) {
-        LOG.info("Path Params: {}", ctx.pathParams());
-        LOG.info("Query Params: {}", ctx.queryParams());
-        LOG.info("Metadata: {}", ctx.currentRoute().metadata());
-        LOG.info("Body: {}", ctx.getBodyAsJson());
-        ctx.next();
+        return vertx.createHttpServer().requestHandler(parentRouter).listen(7080);
     }
     
     /**
