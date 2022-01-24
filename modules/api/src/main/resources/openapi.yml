@@ -38,7 +38,7 @@ paths:
       description: Get the currently logged in user
       summary: Get the currently logged in user
       operationId: getCurrentUser
-      x-vertx-event-bus: budget.system
+      x-vertx-event-bus: budjet.system
       tags:
       - BudJet
       - system
@@ -562,7 +562,6 @@ components:
           type: number
           minimum: 0
           maximum: 3000
-          multipleOf: 0.01
         due_date:
           x-java-field-annotations:
             - '@javax.persistence.Column(name = "duedate")'
