@@ -474,6 +474,7 @@ components:
       type: object
       required:
         - code
+      additionalProperties: true
       properties:
         timestamp:
           type: string
