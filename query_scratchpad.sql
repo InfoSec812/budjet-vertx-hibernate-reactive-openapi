@@ -107,17 +107,7 @@ bills_with_months AS (
     -- and join against any existing payment information from the months table
     SELECT
          d.date,
-         b.*,
-         array_agg(
-                 json_build_object(
-                         'id', m.id,
-                         'bill_id', COALESCE(m.bill_id, b.id),
-                         'day', COALESCE(m.day, d.dom),
-                         'month', coalesce(m.month, d.month),
-                         'year', coalesce(m.year, d.year),
-                         'paid', coalesce(m.paid, false)
-                     )
-             ) AS months
+         b.*
     FROM dates d
     INNER JOIN bills b ON
         ((EXTRACT(MONTH FROM age(d.date, b.startdate)) % 12 = 0) AND (EXTRACT(DAY FROM b.startdate) = d.dom) AND b.period = 7 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
@@ -127,14 +117,7 @@ bills_with_months AS (
         (((EXTRACT(WEEK FROM b.startdate) % 2) = (d.week % 2)) AND (EXTRACT(ISODOW FROM b.startdate) = d.dow) AND b.period = 2 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
         (EXTRACT(ISODOW FROM b.startdate) = d.dow AND b.period = 1 AND (b.enddate IS NULL OR b.enddate >= d.date)) OR
         (b.startdate = d.date AND b.period = 0)
-    LEFT JOIN
-        months m
-    ON
-        m.bill_id = b.id AND
-        m.day = d.dom AND
-        m.month = d.month AND
-        m.year = d.year
-    GROUP BY b.id, m.bill_id, d.date
+    GROUP BY b.id, d.date
 ),
 incomes AS (
     -- Select all income sources which have due dates which correspond with a date from the

@@ -1,5 +1,6 @@
 package com.zanclus.api.services;
 
+import com.zanclus.models.DailyBalance;
 import io.smallrye.mutiny.tuples.Functions;
 import io.smallrye.mutiny.vertx.UniHelper;
 import io.vertx.core.AsyncResult;
@@ -10,6 +11,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import org.hibernate.reactive.mutiny.Mutiny;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class CashflowApiImpl extends AbstractService implements CashflowApi {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(CashflowApiImpl.class);
     
     final Vertx vertx;
     
@@ -30,18 +35,11 @@ public class CashflowApiImpl extends AbstractService implements CashflowApi {
         this.vertx = vertx;
     }
     
-    private List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
-        return objects.stream()
-            .map(o -> new JsonObject((String)o))
-            .toList();
-    }
-    
     @Override
     public void getCashFlow(String startDate, String endDate, Float startingBalance, ServiceRequest ctx,
             Handler<AsyncResult<ServiceResponse>> handler) {
         var parsedStartDate = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
         var parsedEndDate = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
-    
     
         Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun =
             (LocalDate start, LocalDate end, Handler<AsyncResult<ServiceResponse>> hdlr) ->
@@ -53,10 +51,19 @@ public class CashflowApiImpl extends AbstractService implements CashflowApi {
                                 .setParameter(2, end)
                                 .setParameter(3, startingBalance)
                                 .getResultList()
-                    )
-                    .map(this::mapRawObjectToJsonObject)
-                    .map(this::mapJsonListToServiceResponse).onFailure()
-                    .recoverWithItem(this::mapThrowableToServiceResponse)).onComplete(handler);
+                        )
+                        .map(this::mapRawObjectToJsonObject)
+                        .map(this::mapJsonObjectsToDailyBalance)
+                        .map(this::mapListToServiceResponse)
+                        .onFailure().recoverWithItem(this::mapThrowableToServiceResponse))
+                    .onComplete(handler);
         checkDates(parsedStartDate, parsedEndDate, fun, handler);
+    }
+    
+    private List<DailyBalance> mapJsonObjectsToDailyBalance(List<JsonObject> jsonObjects) {
+        return jsonObjects
+                    .stream()
+                    .map(j -> j.mapTo(DailyBalance.class))
+                    .toList();
     }
 }

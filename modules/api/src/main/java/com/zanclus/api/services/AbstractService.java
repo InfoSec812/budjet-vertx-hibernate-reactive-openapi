@@ -46,6 +46,12 @@ public abstract class AbstractService {
         var err = new Errors().code(404).msg("Not found").timestamp(OffsetDateTime.now());
         return ServiceResponse.completedWithJson(JsonObject.mapFrom(err));
     }
+    
+    List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
+        return objects.stream()
+            .map(o -> new JsonObject((String)o))
+            .toList();
+    }
 
     Uni<? extends Serializable> mapNullToNotFound(Serializable e) {
         if (e == null) {

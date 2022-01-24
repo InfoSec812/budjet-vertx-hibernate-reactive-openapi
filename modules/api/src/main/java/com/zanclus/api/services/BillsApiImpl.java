@@ -76,12 +76,6 @@ public class BillsApiImpl extends AbstractService implements BillsApi {
         checkDates(parsedStartDate, parsedEndDate, fun, handler);
     }
     
-    private List<JsonObject> mapRawObjectToJsonObject(List<Object> objects) {
-        return objects.stream()
-                        .map(o -> new JsonObject((String)o))
-                        .toList();
-    }
-    
     @Override
     public void updateBill(String id, JsonObject bill, ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
         var parsedBill = bill.mapTo(Bill.class);
