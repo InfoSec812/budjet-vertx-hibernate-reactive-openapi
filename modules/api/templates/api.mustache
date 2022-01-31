@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import io.vertx.ext.web.api.service.WebApiServiceGen;
+import io.vertx.ext.web.handler.HttpException;
 import org.hibernate.reactive.mutiny.Mutiny;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -18,27 +19,25 @@ import java.util.Map;
 
 @WebApiServiceGen
 public interface {{classname}}  {
-{{#operations}}
-{{#operation}}
+{{#operations}}{{#operation}}
     /**
-     * {{summary}}
-     * {{#allParams}}
-     * @param {{paramName}} {{description}} {{/allParams}}
-     * @param ctx The {@link ServiceRequest} which has the data from the request
-     * @param handler The {@link Handler} for sending the response using a {@link ServiceResponse}
-     */
-    default void {{operationId}}({{#allParams}}{{#isPrimitiveType}}{{#isDate}}String{{/isDate}}{{^isDate}}{{{dataType}}}{{/isDate}}{{/isPrimitiveType}}{{^isPrimitiveType}}JsonObject{{/isPrimitiveType}} {{#isBodyParam}}body{{/isBodyParam}}{{^isBodyParam}}{{paramName}}{{/isBodyParam}}, {{/allParams}}ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
-        handler.handle(Future.failedFuture(new Exception("Not yet implemented")));
+    * {{summary}}
+    * {{#allParams}}
+    * @param {{#isBodyParam}}body{{/isBodyParam}}{{^isBodyParam}}{{paramName}}{{/isBodyParam}} {{description}} {{/allParams}}
+    * @param ctx The {@link ServiceRequest} which has the information about the request
+    * @return A {@link Future} containign a {@link ServiceResponse} with the result of the request
+    */
+    default Future<ServiceResponse> {{operationId}}({{#allParams}}{{#isPrimitiveType}}{{#isDate}}String{{/isDate}}{{^isDate}}{{{dataType}}}{{/isDate}}{{/isPrimitiveType}}{{^isPrimitiveType}}JsonObject{{/isPrimitiveType}} {{#isBodyParam}}body{{/isBodyParam}}{{^isBodyParam}}{{paramName}}{{/isBodyParam}}, {{/allParams}}ServiceRequest ctx) {
+        return Future.failedFuture(new HttpException(501, "Not yet implemented"));
     }
-{{/operation}}
-{{/operations}}
+{{/operation}}{{/operations}}
 
-  /**
+    /**
     * A method used by the Vert.x ServiceProxy to create instances of this Service
     *
     * @param vertx The {@link Vertx} instance for the context of this Service
     */
-  static {{classname}} create(Vertx vertx) {
-    return new {{classname}}Impl(vertx);
-  }
+    static {{classname}} create(Vertx vertx) {
+        return new {{classname}}Impl(vertx);
+    }
 }

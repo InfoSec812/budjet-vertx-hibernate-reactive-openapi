@@ -26,11 +26,11 @@ public class SystemApiImpl implements SystemApi, ServiceInterface {
     }
     
     @Override
-    public void checkHealth(ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
+    public Future<ServiceResponse> checkHealth(ServiceRequest ctx) {
         Errors healthStatus = new Errors();
         healthStatus.setCode(500);
         healthStatus.setMsg("Not ready");
-        UniHelper.toFuture(sessionFactory.withSession(
+        return UniHelper.toFuture(sessionFactory.withSession(
                     session -> session.createNativeQuery("SELECT 1").getSingleResult())
                .map(o -> {
                    healthStatus.setCode(200);
@@ -39,16 +39,15 @@ public class SystemApiImpl implements SystemApi, ServiceInterface {
                })
                .map(h -> ServiceResponse.completedWithJson(healthStatus.toJson())
            )
-        ).onComplete(handler);
+        );
     }
 
     @Override
-    public void getCurrentUser(ServiceRequest ctx, Handler<AsyncResult<ServiceResponse>> handler) {
+    public Future<ServiceResponse> getCurrentUser(ServiceRequest ctx) {
       var staticUser = new User()
                                     .email("me@example.com")
                                     .name("John Doe");
       var currentUserInfo = ServiceResponse.completedWithJson(staticUser.toJson());
-      var serviceResponseFuture = Future.succeededFuture(currentUserInfo);
-      handler.handle(serviceResponseFuture);
+      return Future.succeededFuture(currentUserInfo);
     }
 }

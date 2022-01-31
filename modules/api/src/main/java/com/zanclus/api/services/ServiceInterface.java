@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 
@@ -71,7 +72,7 @@ public interface ServiceInterface {
         return new ServiceResponse().setStatusCode(204).setStatusMessage("NO CONTENT");
     }
     
-    default void checkDates(String startDate, String endDate, Functions.Function3<LocalDate, LocalDate, Handler<AsyncResult<ServiceResponse>>, Future<ServiceResponse>> fun, Handler<AsyncResult<ServiceResponse>> handler) {
+    default Future<ServiceResponse> checkDates(String startDate, String endDate, BiFunction<LocalDate, LocalDate, Future<ServiceResponse>> fun) {
         final var now = LocalDate.now();
         LocalDate parsedStartDate;
         LocalDate parsedEndDate;
@@ -97,20 +98,19 @@ public interface ServiceInterface {
         }
         
         if (parsedEndDate.isBefore(parsedStartDate)) {
-            handleBadRequest(handler);
+            return handleBadRequest();
         } else {
-            fun.apply(parsedStartDate, parsedEndDate, handler);
+            return fun.apply(parsedStartDate, parsedEndDate);
         }
     }
     
-    default void handleBadRequest(Handler<AsyncResult<ServiceResponse>> handler) {
+    default Future<ServiceResponse> handleBadRequest() {
         JsonObject errBody = new JsonObject();
         errBody.put("message", "ID from path param MUST match ID in submitted object.");
         errBody.put("code", 400);
-        var badRequest = ServiceResponse
+        return Future.succeededFuture(ServiceResponse
             .completedWithJson(errBody)
             .setStatusMessage(BAD_REQUEST.reasonPhrase())
-            .setStatusCode(BAD_REQUEST.code());
-        handler.handle(Future.succeededFuture(badRequest));
+            .setStatusCode(BAD_REQUEST.code()));
     }
 }
